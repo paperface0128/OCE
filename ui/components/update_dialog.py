@@ -6,14 +6,17 @@ class UpdateDialog(ctk.CTkToplevel):
     def __init__(self, parent, update_info: dict):
         super().__init__(parent)
         self.title("업데이트 가능")
-        self.geometry("420x320")
         self.resizable(False, False)
         self.grab_set()
         self._info = update_info
         self._force = update_info.get("force", False)
         self._build()
 
-        # 강제 업데이트면 창 닫기 막기
+        # notes 수에 따라 높이 동적 조정
+        notes_count = len(self._info.get("notes", [])[:6])
+        height = 320 + notes_count * 22 + (40 if self._force else 0)
+        self.geometry(f"420x{height}")
+
         if self._force:
             self.protocol("WM_DELETE_WINDOW", lambda: None)
 
