@@ -50,6 +50,13 @@ def main():
             json.dump({"version": new_version}, f)
         print(f"버전 업데이트: {new_version}")
 
+        # 불필요한 assets 폴더 제거 (이제 exe 안에 묶임)
+        import shutil
+        assets_path = target_dir / "assets"
+        if assets_path.exists():
+            shutil.rmtree(assets_path)
+            print("불필요한 assets 폴더 제거 완료")
+
         try:
             os.unlink(zip_path)
         except Exception:

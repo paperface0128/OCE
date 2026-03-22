@@ -22,12 +22,15 @@ class App(ctk.CTk):
 
         self.project: Project = new_project()
         self._selected_node: str | None = "_START"
+        
 
         self._build_layout()
         self._refresh_node_list()
         self._load_node("_START")
         self.after(500, self._run_checks)
         self._is_loading = False
+
+        self.bind("<Control-s>", lambda e: self._save_project())
 
         self.after(2000, self._check_update)  # 앱 로드 후 2초 뒤 체크
         self.after(100, self._load_last_project)
@@ -230,6 +233,7 @@ class App(ctk.CTk):
     def _build_flow_tab(self):
         from ui.pages.flow_page import FlowPage
         self.flow_page = FlowPage(self.tabview.tab("노드 흐름"))
+        self.flow_page._on_node_change = self._on_node_change  # ← 추가
         self.flow_page.pack(fill="both", expand=True)
 
     # ─────────────────────────────────────────
@@ -278,7 +282,7 @@ class App(ctk.CTk):
         ).place(relx=0.5, rely=0.5, anchor="center")
 
         self.update_idletasks()
-        self.after(80, lambda: self._run_and_close(callback, overlay))
+        self.after(10, lambda: self._run_and_close(callback, overlay))
 
     def _run_and_close(self, callback, overlay):
         try:
@@ -377,8 +381,14 @@ class App(ctk.CTk):
                 "free": "gray70"
             }.get(plan, "gray70")
 
+            display = {
+                "free": "Free",
+                "스타터": "스타터",
+                "컬렉터": "컬렉터"
+            }.get(plan, plan)
+
             self._login_btn.configure(
-                text=f"{plan}",
+                text=display,  # ← 변경
                 fg_color="transparent",
                 hover_color="#2a2a2a",
                 text_color=plan_color,
@@ -689,19 +699,38 @@ class App(ctk.CTk):
     # ─────────────────────────────────────────
     # 탭 전환
     # ─────────────────────────────────────────
+    # def _on_tab_change(self):
+    #     current = self.tabview.get()
+
+    #     def _do():
+    #         if current == "노드 흐름":
+    #             self.flow_page.render(self.project)
+    #         elif current == "노드 편집":
+    #             if self._selected_node:
+    #                 self.node_page.load_node(
+    #                     self.project.get_node(self._selected_node),
+    #                     self.project.node_names()
+    #                 )
+    #         elif current == "캐릭터 정보":
+    #             self.meta_page._refresh_emotion_list()
+
+    #     self._show_area_loading(_do)
     def _on_tab_change(self):
         current = self.tabview.get()
 
-        def _do():
-            if current == "노드 흐름":
+        if current == "노드 흐름":
+            def _do():
                 self.flow_page.render(self.project)
-            elif current == "노드 편집":
-                if self._selected_node:
+            self._show_area_loading(_do)
+
+        elif current == "노드 편집":
+            if self._selected_node:
+                def _do():
                     self.node_page.load_node(
                         self.project.get_node(self._selected_node),
                         self.project.node_names()
                     )
-            elif current == "캐릭터 정보":
-                self.meta_page._refresh_emotion_list()
+                #self._show_area_loading(_do)
 
-        self._show_area_loading(_do)
+        elif current == "캐릭터 정보":
+            self.meta_page._refresh_emotion_list()

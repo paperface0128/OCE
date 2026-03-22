@@ -66,12 +66,12 @@ def verify_integrity(project: Project, saved_path: str) -> list[str]:
             current_hash = hashlib.sha256(
                 json.dumps(current_data, ensure_ascii=False, sort_keys=True).encode()
             ).hexdigest()
-            if saved_hash != current_hash:
-                # 디버그용
-                print(f"[{node.name}] 불일치!")
-                print(f"저장: {json.dumps(saved_data, ensure_ascii=False)}")
-                print(f"현재: {json.dumps(current_data, ensure_ascii=False)}")
-                warnings.append(f"[{node.name}]")
+            # if saved_hash != current_hash:
+            #     # 디버그용
+            #     print(f"[{node.name}] 불일치!")
+            #     print(f"저장: {json.dumps(saved_data, ensure_ascii=False)}")
+            #     print(f"현재: {json.dumps(current_data, ensure_ascii=False)}")
+            #     warnings.append(f"[{node.name}]")
         except Exception:
             pass
 

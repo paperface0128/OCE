@@ -26,6 +26,9 @@ class FlowPage(ctk.CTkFrame):
         self._ctrl_drag_start_y: float | None = None
         self._ctrl_drag_start_scale: float = 1.0
 
+        self._connect_from: str | None = None  # 연결 모드 출발 노드
+        self._on_node_change = None  # app 에서 설정
+
         self._build()
 
     def _build(self):
@@ -44,7 +47,7 @@ class FlowPage(ctk.CTkFrame):
         self.zoom_label.pack(side="left", padx=4)
 
         ctk.CTkLabel(toolbar,
-                     text="드래그: 이동/범위 지정 | 휠: 세로 스크롤 | Shift+휠: 가로 스크롤 | Ctrl+휠: 줌",
+                     text="드래그: 이동/범위 지정 | 휠: 세로 스크롤 | Shift+휠: 가로 스크롤 | Ctrl+휠: 줌 | 우클릭: 빠른 연결",
                      text_color="gray").pack(side="left", padx=8)
 
         frame = ctk.CTkFrame(self, corner_radius=6)
@@ -65,6 +68,7 @@ class FlowPage(ctk.CTkFrame):
         self.canvas.bind("<ButtonPress-1>",          self._on_mouse_down)
         self.canvas.bind("<B1-Motion>",               self._on_mouse_drag)
         self.canvas.bind("<ButtonRelease-1>",         self._on_mouse_up)
+        self.canvas.bind("<ButtonPress-3>", self._on_right_click)
 
         # Ctrl 줌
         self.canvas.bind("<Control-ButtonPress-1>",   self._on_ctrl_down)
@@ -178,25 +182,23 @@ class FlowPage(ctk.CTkFrame):
                             fill="#aaaaff", font=("Arial", max(7, int(8 * s)))
                         )
                     else:
-                        # 꺾인 선의 중간점
                         scx = int(sx * s) + int(self.NODE_W * s) // 2
                         scy = int(sy * s) + int(self.NODE_H * s) // 2
                         dcx = int(dx * s) + int(self.NODE_W * s) // 2
                         dcy = int(dy * s) + int(self.NODE_H * s) // 2
-                        mid_y = (scy + dcy) / 2
 
-                        # 출발: 아래 또는 위 경계
-                        x1, y1 = self._box_edge_point(sx, sy, scx, int(mid_y), s)
-                        # 도착: 위 또는 아래 경계
-                        x2, y2 = self._box_edge_point(dx, dy, dcx, int(mid_y), s)
+                        # 출발점: 도착 노드 중심 방향으로 경계 교점
+                        x1, y1 = self._box_edge_point(sx, sy, dcx, dcy, s)
+                        # 도착점: 출발 노드 중심 방향으로 경계 교점
+                        x2, y2 = self._box_edge_point(dx, dy, scx, scy, s)
 
                         self.canvas.create_line(
-                            x1, y1, x1, mid_y, x2, mid_y, x2, y2,
-                            smooth=True, fill=line_color, width=lw,
+                            x1, y1, x2, y2,
+                            smooth=False, fill=line_color, width=lw,
                             arrow="last", arrowshape=(14, 18, 6)
                         )
                         self.canvas.create_text(
-                            (x1 + x2) // 2, mid_y - int(12 * s),
+                            (x1 + x2) // 2, (y1 + y2) // 2 - int(12 * s),
                             text=btn.label or btn.next,
                             fill="#aaaaff", font=("Arial", max(7, int(8 * s)))
                         )
@@ -212,10 +214,22 @@ class FlowPage(ctk.CTkFrame):
                       "#4a9eff" if not is_special else "#e94560")
             lw = 3 if node.name in self._selected_nodes else 2
 
+            # ── 연결 모드 출발 노드 강조 ──
+            if node.name == self._connect_from:
+                outline = "#ffab40"
+                lw = 3
+                self.canvas.create_text(
+                    rx + nw // 2, ry - int(16 * s),
+                    text="연결할 노드를 우클릭",
+                    fill="#ffab40",
+                    font=("Arial", max(7, int(9 * s)))
+                )
+
             self.canvas.create_rectangle(
                 rx, ry, rx + nw, ry + nh,
                 fill=fill, outline=outline, width=lw
             )
+
             self.canvas.create_text(
                 rx + nw // 2, ry + nh // 2 - int(8 * s),
                 text=node.name, fill="white",
@@ -250,7 +264,49 @@ class FlowPage(ctk.CTkFrame):
             if x <= cx <= x + self.NODE_W and y <= cy <= y + self.NODE_H:
                 return name
         return None
+    def _create_connection(self, from_name: str, to_name: str):
+        if not self._project:
+            return
 
+        node = self._project.get_node(from_name)
+        if not node:
+            return
+
+        # 이미 같은 연결이 있으면 스킵
+        for btn in node.buttons:
+            if btn.next == to_name:
+                return
+
+        from core.models import Button
+        import random
+        new_btn = Button(
+            id=f"{from_name}_btn_{random.randint(100, 999)}",
+            label=f"→ {to_name}",
+            next=to_name
+        )
+        node.buttons.append(new_btn)
+
+        # app 에 변경 알림
+        if self._on_node_change:
+            self._on_node_change(node)
+    def _on_right_click(self, event):
+        cx, cy = self._canvas_pos(event)
+        hit = self._hit_node(cx, cy)
+
+        if hit:
+            if self._connect_from:
+                # 연결 모드 중 — 다른 노드 우클릭 시 연결
+                if hit != self._connect_from:
+                    self._create_connection(self._connect_from, hit)
+                self._connect_from = None
+            else:
+                # 연결 모드 시작
+                self._connect_from = hit
+        else:
+            # 빈 공간 우클릭 → 취소
+            self._connect_from = None
+
+        self._render_canvas()
     def _on_mouse_down(self, event):
         cx, cy = self._canvas_pos(event)
         hit = self._hit_node(cx, cy)

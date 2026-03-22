@@ -2,6 +2,7 @@
 echo Building...
 
 pip install pyinstaller
+pip install grapheme
 
 pyinstaller --noconfirm --onefile --windowed ^
   --name "OCE" ^

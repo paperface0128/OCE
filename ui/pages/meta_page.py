@@ -65,18 +65,48 @@ class MetaPage(ctk.CTkFrame):
         self.desc_entry.grid(row=2, column=1, padx=4, pady=6, sticky="w")
 
         lbl("아이콘(이모지)", 3)
-        self.icon_var = ctk.StringVar(value="❓")
-        ctk.CTkEntry(form, textvariable=self.icon_var, width=60).grid(
-            row=3, column=1, padx=4, pady=6, sticky="w"
+
+        icon_row = ctk.CTkFrame(form, fg_color="transparent")
+        icon_row.grid(row=3, column=1, padx=4, pady=6, sticky="w", columnspan=3)
+
+        ctk.CTkLabel(icon_row, text=":", text_color="gray60",
+                     font=ctk.CTkFont(size=14)).pack(side="left")
+
+        self.icon_var = ctk.StringVar(value="question")
+        icon_entry = ctk.CTkEntry(icon_row, textvariable=self.icon_var, width=120,
+                                   placeholder_text="sob, heart, star...")
+        icon_entry.pack(side="left", padx=2)
+
+        ctk.CTkLabel(icon_row, text=":", text_color="gray60",
+                     font=ctk.CTkFont(size=14)).pack(side="left")
+
+        self._icon_preview_lbl = ctk.CTkLabel(icon_row, text="♥️", width=36,
+                                               font=ctk.CTkFont(size=20))
+        self._icon_preview_lbl.pack(side="left", padx=(8, 0))
+
+        def _on_icon_change(*_):
+            val = self.icon_var.get().strip()
+            try:
+                import emoji
+                converted = emoji.emojize(f":{val}:", language="alias")
+                if converted != f":{val}:":
+                    self._icon_preview_lbl.configure(text=converted)
+                else:
+                    self._icon_preview_lbl.configure(text="알 수 없음")
+            except ImportError:
+                self._icon_preview_lbl.configure(text="알 수 없음")
+            self._emit()
+
+        self.icon_var.trace_add("write", _on_icon_change)
+
+        ctk.CTkLabel(form, text="ex) :ribbon: :heart: :star: (디스코드 이모지 이름을 쓰세요)",
+                     text_color="gray60",
+                     font=ctk.CTkFont(size=11)).grid(
+            row=3, column=3, padx=4, pady=6, sticky="w"
         )
 
-        self.default_skin_var = ctk.StringVar(value="기본")
-
-        for var in [self.icon_var]:
-            var.trace_add("write", lambda *_: self._emit())
-        self.desc_entry.bind("<KeyRelease>", lambda _: self._emit())
-
         # ── 스킨 목록 ──
+        self.default_skin_var = ctk.StringVar(value="기본")
         skin_header = ctk.CTkFrame(self._scroll, fg_color="transparent")
         skin_header.pack(fill="x", padx=16, pady=(16, 2))
         ctk.CTkLabel(skin_header, text="스킨 목록",
@@ -714,7 +744,7 @@ class MetaPage(ctk.CTkFrame):
         self.name_var.set(meta.name)
         self.desc_entry.delete(0, "end")
         self.desc_entry.insert(0, meta.description)
-        self.icon_var.set(meta.icon)
+        self.icon_var.set(meta.icon.strip(":"))  # ← 여기서 한 번만
         self.default_skin_var.set(meta.default_skin)
 
         for f, *_ in self._skin_rows:
@@ -778,7 +808,7 @@ class MetaPage(ctk.CTkFrame):
                 id=self._character_id,
                 name=self.name_var.get(),
                 description=self.desc_entry.get(),
-                icon=self.icon_var.get(),
+                icon=f":{self.icon_var.get().strip()}:",  # ← 콜론 붙여서 저장
                 default_skin=self.default_skin_var.get(),
                 skins=skins
             )

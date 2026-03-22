@@ -22,7 +22,6 @@ Name: "desktopicon"; Description: "바탕화면 바로가기 만들기"; GroupDe
 [Files]
 Source: "dist\OCE.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\OCE_updater.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs
 Source: "version.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "CREDITS.md"; DestDir: "{app}"; Flags: ignoreversion
 

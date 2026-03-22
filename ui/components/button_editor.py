@@ -22,11 +22,12 @@ class ButtonEditor(ctk.CTkFrame):
     def __init__(self, parent, btn: Button, node_names: list, on_delete=None, on_change=None, index=0, get_skins=None, current_node: str = ""):
         super().__init__(parent, corner_radius=6, border_width=1)
         self.on_delete = on_delete
-        self.on_change = on_change
+        self.on_change = None
         self.index = index
         self.get_skins = get_skins
         self._current_node = current_node
         self._build(btn, node_names)
+        self.on_change = on_change  # ← 빌드 완료 후 연결
 
     def _build(self, btn: Button, node_names: list):
         header = ctk.CTkFrame(self, fg_color="transparent")
@@ -93,9 +94,10 @@ class ButtonEditor(ctk.CTkFrame):
         # ── 조건 (grid 밖, 하단 별도) ──
         from ui.components.condition_editor import ConditionEditor
         self.cond_editor = ConditionEditor(
-            self, conditions=btn.conditions, on_change=self._emit
+            self, conditions=btn.conditions, on_change=None
         )
         self.cond_editor.pack(fill="x", padx=8, pady=(0, 6))
+        self.after(0, lambda: setattr(self.cond_editor, 'on_change', self._emit))
 
 
         body.columnconfigure(1, weight=1)

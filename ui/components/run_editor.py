@@ -54,7 +54,20 @@ class RunEditor(ctk.CTkFrame):
         self.penny_var = ctk.StringVar(value=str(run.get("페니", "")) if "페니" in run else "")
         ctk.CTkEntry(form, textvariable=self.penny_var, width=100,
                      placeholder_text="비워두면 없음").grid(row=0, column=1, padx=(0, 20), pady=4, sticky="w")
-        self.penny_var.trace_add("write", lambda *_: self._emit())
+        def validate_penny(*_):
+            val = self.penny_var.get().strip()
+            if val and val not in ("-", ""):
+                try:
+                    n = int(val)
+                    if n < -300:
+                        self.penny_var.set("-300")
+                    elif n > 300:
+                        self.penny_var.set("300")
+                except ValueError:
+                    pass
+            self._emit()
+
+        self.penny_var.trace_add("write", validate_penny)
 
         # ── 스킨 변경 ──
         lbl("스킨 변경", 0, 2)
@@ -318,7 +331,9 @@ class RunEditor(ctk.CTkFrame):
         try:
             p = self.penny_var.get().strip()
             if p:
-                run["페니"] = int(p)
+                val = int(p)
+                val = max(-300, min(300, val))  # ← 제한
+                run["페니"] = val
         except ValueError:
             pass
 
