@@ -615,7 +615,7 @@ class App(ctk.CTk):
         from pathlib import Path
 
         if getattr(sys, 'frozen', False):
-            qr_path = Path(sys.executable).parent / "assets" / "donateqr.png"
+            qr_path = Path(sys._MEIPASS) / "assets" / "donateqr.png"  # ← _MEIPASS
         else:
             qr_path = Path(__file__).parent.parent / "assets" / "donateqr.png"
 
@@ -653,7 +653,7 @@ class App(ctk.CTk):
         from pathlib import Path
 
         if getattr(sys, 'frozen', False):
-            qr_path = Path(sys.executable).parent / "assets" / "serverqr.png"
+            qr_path = Path(sys._MEIPASS) / "assets" / "serverqr.png"  # ← _MEIPASS
         else:
             qr_path = Path(__file__).parent.parent / "assets" / "serverqr.png"
 

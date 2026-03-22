@@ -1,7 +1,11 @@
 import sys
 import os
 from pathlib import Path
-
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    pass
 # exe 빌드 시 내부 경로, 개발 시 현재 경로
 if getattr(sys, 'frozen', False):
     base_dir = Path(sys._MEIPASS)

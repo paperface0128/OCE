@@ -9,3 +9,5 @@ Output/
 *.spec
 .env
 *.db
+* text=auto
+*.py text eol=crlf

@@ -13,9 +13,13 @@ class UpdateDialog(ctk.CTkToplevel):
         self._build()
 
         # notes 수에 따라 높이 동적 조정
-        notes_count = len(self._info.get("notes", [])[:6])
-        height = 320 + notes_count * 22 + (40 if self._force else 0)
-        self.geometry(f"420x{height}")
+        notes_count = min(len(self._info.get("notes", [])), 6)
+        base_height = 280
+        notes_height = notes_count * 24
+        force_height = 40 if self._force else 0
+        height = base_height + notes_height + force_height
+        self.geometry(f"440x{height}")
+        self.minsize(440, height)
 
         if self._force:
             self.protocol("WM_DELETE_WINDOW", lambda: None)
