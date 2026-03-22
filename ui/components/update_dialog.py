@@ -114,15 +114,5 @@ class UpdateDialog(ctk.CTkToplevel):
         threading.Thread(target=run, daemon=True).start()
     def _restart(self):
         import os
-        import sys
-        import subprocess
-
-        try:
-            if getattr(sys, 'frozen', False):
-                subprocess.Popen([sys.executable])
-            else:
-                subprocess.Popen([sys.executable] + sys.argv)
-        except Exception as e:
-            print(f"재시작 실패: {e}")
-
+        # OCE_updater.exe가 재실행 담당 (updater_helper.py)
         self.winfo_toplevel().after(1000, lambda: os._exit(0))

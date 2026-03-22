@@ -1,6 +1,6 @@
 [Setup]
 AppName=OCE
-AppVersion=0.0.0
+AppVersion=1.0.1
 AppPublisher=paperface0128
 DefaultDirName={userappdata}\OCE
 DefaultGroupName=OCE
@@ -17,7 +17,7 @@ UsedUserAreasWarning=no
 Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "바탕화면 바로가기 만들기"; GroupDescription: "추가 작업:"
+Name: "desktopicon"; Description: "바탕화면 바로가기"; GroupDescription: "추가 작업:"
 
 [Files]
 Source: "dist\OCE.exe"; DestDir: "{app}"; Flags: ignoreversion

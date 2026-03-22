@@ -49,17 +49,23 @@ def main():
             json.dump({"version": new_version}, f)
         print(f"버전 업데이트: {new_version}")
 
-        # 불필요한 assets 폴더 제거 (이제 exe 안에 묶임)
+        # 불필요한 assets 폴더 제거
         import shutil
         assets_path = target_dir / "assets"
         if assets_path.exists():
             shutil.rmtree(assets_path)
-            print("불필요한 assets 폴더 제거 완료")
 
+        # zip 삭제
         try:
             os.unlink(zip_path)
         except Exception:
             pass
+
+        # ← 여기서 메인 앱 재실행
+        if main_exe and Path(main_exe).exists():
+            import subprocess
+            subprocess.Popen([main_exe])
+            print(f"재실행: {main_exe}")
 
 
     except PermissionError as e:

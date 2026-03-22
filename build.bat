@@ -8,7 +8,6 @@ pyinstaller --noconfirm --onefile --windowed ^
   --name "OCE" ^
   --icon "C:\Users\ysh20\Desktop\oc_editor_exe\icon.ico" ^
   --add-data "assets;assets" ^
-  --add-data "version.json;." ^
   --hidden-import "customtkinter" ^
   --hidden-import "PIL" ^
   --hidden-import "sqlite3" ^
