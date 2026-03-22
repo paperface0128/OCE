@@ -1,0 +1,11 @@
+config.json
+auth.json
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+Output/
+*.spec
+.env
+*.db
