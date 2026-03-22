@@ -1,6 +1,6 @@
 [Setup]
 AppName=OCE
-AppVersion=1.0.1
+AppVersion=1.1.0
 AppPublisher=paperface0128
 DefaultDirName={userappdata}\OCE
 DefaultGroupName=OCE

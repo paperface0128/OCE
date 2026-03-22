@@ -71,7 +71,6 @@ class UpdateDialog(ctk.CTkToplevel):
         )
         self._update_btn.pack(side="left", padx=8)
 
-        # 강제 업데이트면 나중에 버튼 숨김
         if not self._force:
             ctk.CTkButton(
                 btn_row, text="나중에", width=80,
@@ -89,11 +88,14 @@ class UpdateDialog(ctk.CTkToplevel):
                 self._progress.set(percent / 100)
                 self._progress_label.configure(text=f"{percent}%")
 
-            success = download_and_apply(
-                self._info["url"],
-                self._info["version"],
-                progress_callback=on_progress
-            )
+            try:
+                success = download_and_apply(
+                    self._info["url"],
+                    self._info["version"],
+                    progress_callback=on_progress
+                )
+            except Exception:
+                success = False
 
             if success:
                 self._progress.set(1.0)
@@ -101,18 +103,17 @@ class UpdateDialog(ctk.CTkToplevel):
                     text="완료! 3초 후 자동 재시작됩니다.",
                     text_color="#00e676"
                 )
-                self._update_btn.configure(text="✅ 완료", state="disabled")
-                # 3초 후 자동 재시작
+                self._update_btn.configure(text="완료", state="disabled")
                 self.winfo_toplevel().after(3000, self._restart)
             else:
                 self._progress_label.configure(
                     text="업데이트 실패. 다시 시도해주세요.",
                     text_color="#ff5252"
                 )
-                self._update_btn.configure(state="normal", text="⬇ 다시 시도")
+                self._update_btn.configure(state="normal", text="다시 시도")
 
         threading.Thread(target=run, daemon=True).start()
+
     def _restart(self):
         import os
-        # OCE_updater.exe가 재실행 담당 (updater_helper.py)
         self.winfo_toplevel().after(1000, lambda: os._exit(0))

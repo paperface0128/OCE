@@ -43,7 +43,6 @@ def get_current_version() -> str:
     
     return "0.0.0"
 
-
 def check_update() -> dict | None:
     try:
         req = urllib.request.Request(
@@ -59,7 +58,7 @@ def check_update() -> dict | None:
         if _version_gt(latest, current):
             zip_url = None
             for asset in data.get("assets", []):
-                if asset["name"].endswith(".zip"):
+                if asset["name"] == "patch.zip":  # ← patch.zip만 인식
                     zip_url = asset["browser_download_url"]
                     break
 
@@ -67,10 +66,7 @@ def check_update() -> dict | None:
                 return None
 
             body = data.get("body", "")
-
-            # force 플래그 확인 — 본문에 [FORCE] 있으면 강제 업데이트
             is_force = "[FORCE]" in body.upper()
-
             notes = [line.strip("- ").strip()
                      for line in body.splitlines()
                      if line.strip().startswith("-")]
@@ -84,6 +80,7 @@ def check_update() -> dict | None:
     except Exception:
         pass
     return None
+
 
 def download_and_apply(zip_url: str, new_version: str,
                        progress_callback=None) -> bool:
@@ -105,24 +102,24 @@ def download_and_apply(zip_url: str, new_version: str,
                 percent = int(count * block_size * 100 / total_size)
                 progress_callback(min(percent, 100))
 
-        print(f"다운로드 시작: {zip_url}")
         urllib.request.urlretrieve(zip_url, tmp.name, reporthook)
-        print(f"다운로드 완료: {tmp.name}")
 
         if getattr(sys, 'frozen', False):
-            # exe 환경: 업데이터 헬퍼에게 위임
+            pending_zip = base_dir / "patch_pending.zip"
+            shutil.copy2(tmp.name, pending_zip)
+            os.unlink(tmp.name)
             updater_exe = base_dir / "OCE_updater.exe"
+
             if updater_exe.exists():
                 subprocess.Popen([
                     str(updater_exe),
-                    tmp.name,
+                    str(pending_zip),
                     str(base_dir),
                     new_version,
                     str(sys.executable)
                 ])
                 return True
             else:
-                print("OCE_updater.exe 없음")
                 return False
         else:
             # 개발 환경: 직접 적용
@@ -145,7 +142,6 @@ def download_and_apply(zip_url: str, new_version: str,
                         dest.parent.mkdir(parents=True, exist_ok=True)
                         with zf.open(prefix + file_path) as src, open(dest, "wb") as dst:
                             dst.write(src.read())
-                        print(f"교체 완료: {file_path}")
                     except Exception as e:
                         print(f"파일 교체 실패: {file_path} — {e}")
 
@@ -156,10 +152,11 @@ def download_and_apply(zip_url: str, new_version: str,
             return True
 
     except Exception as e:
-        print(f"업데이트 실패 상세: {type(e).__name__}: {e}")
+        print(f"업데이트 실패: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
+
 def _version_gt(a: str, b: str) -> bool:
     """a > b 버전 비교"""
     try:
